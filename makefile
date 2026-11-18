@@ -127,3 +127,23 @@ compile-documentation:
 	bash documentation/ECOv003_L3_L4_JET_ATBD.sh
 	# Run the shell script to compile the User Guide to PDF
 	bash documentation/ECOv003_L3_L4_JET_User_Guide.sh
+
+# Core package, tests, and docs (~30k–60k tokens)
+repomix:
+	npx repomix --ignore "**/*.csv,**/*.tsv,**/*.svg,**/*.egg-info/**,**/*.ipynb,LICENSE" --copy
+
+# Pack notebooks (stripping images/HTML and truncating long text outputs) and copy to clipboard
+copy-notebooks:
+	rm -rf /tmp/jet_nb
+	mkdir -p /tmp/jet_nb
+	python -c 'import glob, json, os; trim = lambda x: ("".join(x) if isinstance(x, list) else x)[:1500]; [json.dump({**nb, "cells": [{**c, "outputs": [{**o, **({"data": {"text/plain": trim(o["data"]["text/plain"])}} if "data" in o and "text/plain" in o["data"] else {"data": {}} if "data" in o else {}), **({"text": trim(o["text"])} if "text" in o else {})} for o in c.get("outputs", [])]} for c in nb.get("cells", [])]}, open(os.path.join("/tmp/jet_nb", os.path.basename(p)), "w")) for p in glob.glob("notebooks/*.ipynb") if not p.endswith("copy.ipynb") for nb in [json.load(open(p))]]'
+	npx repomix /tmp/jet_nb --copy
+	rm -rf /tmp/jet_nb repomix-output.xml
+
+# Pack notebooks (stripping images/HTML and truncating long text outputs) into repomix-notebooks.xml
+pack-notebooks:
+	rm -rf /tmp/jet_nb
+	mkdir -p /tmp/jet_nb
+	python -c 'import glob, json, os; trim = lambda x: ("".join(x) if isinstance(x, list) else x)[:1500]; [json.dump({**nb, "cells": [{**c, "outputs": [{**o, **({"data": {"text/plain": trim(o["data"]["text/plain"])}} if "data" in o and "text/plain" in o["data"] else {"data": {}} if "data" in o else {}), **({"text": trim(o["text"])} if "text" in o else {})} for o in c.get("outputs", [])]} for c in nb.get("cells", [])]}, open(os.path.join("/tmp/jet_nb", os.path.basename(p)), "w")) for p in glob.glob("notebooks/*.ipynb") if not p.endswith("copy.ipynb") for nb in [json.load(open(p))]]'
+	npx repomix /tmp/jet_nb -o repomix-notebooks.xml
+	rm -rf /tmp/jet_nb

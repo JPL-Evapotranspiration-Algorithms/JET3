@@ -207,3 +207,5 @@ marimo/_lsp/
 __marimo__/
 
 settings.json
+repomix-output.xml
+repomix-notebooks.xml
