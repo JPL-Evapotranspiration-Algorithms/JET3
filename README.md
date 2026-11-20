@@ -65,7 +65,7 @@ pip install JET3
 
 Or install from source:
 ```bash
-git clone https://github.com/JPL-Evapotranspiration-Algorithms/JET3.git
+git clone [https://github.com/JPL-Evapotranspiration-Algorithms/JET3.git](https://github.com/JPL-Evapotranspiration-Algorithms/JET3.git)
 cd JET3
 pip install -e .
 ```
@@ -206,7 +206,7 @@ The JET3 ensemble provides reliable ET estimates suitable for water resource man
 
 ## Repository History
 
-The `JET3` codebase originated inside [`ECOv003-L3T-L4T-JET`](https://github.com/ECOSTRESS-Collection-3/ECOv003-L3T-L4T-JET) (the ECOSTRESS Collection 3 Product Generating Executable) before being extracted into a standalone, mission-independent library in early 2026. For a complete chronological narrative, see [`notes/2026-11-20 repository history.md`](notes/2026-11-20%20repository%20history.md).
+The `JET3` codebase originated inside [`ECOv003-L3T-L4T-JET`](https://github.com/ECOSTRESS-Collection-3/ECOv003-L3T-L4T-JET) (the ECOSTRESS Collection 3 Product Generating Executable) before being extracted into a standalone, mission-independent library in early 2026 (`v3.0.0` / `v3.0.1` on February 18, 2026), roughly three months after ECOSTRESS Collection 3 entered operational forward processing (`eco-level-2-3-4-application` `v1.7.0` / `v1.7.1`, paired with `ECOv003-L3T-L4T-JET v1.13.0`–`v1.16.0`). For the full chronological narrative and baseline audit, see [`notes/2026-11-20 repository history.md`](notes/2026-11-20%20repository%20history.md).
 
 | Date | `JET3` Version | `ECOv003-L3T-L4T-JET` | Key Constituent Model / Infra Versions | Milestone |
 | :--- | :--- | :--- | :--- | :--- |
@@ -215,13 +215,23 @@ The `JET3` codebase originated inside [`ECOv003-L3T-L4T-JET`](https://github.com
 | **2025-07-28** | *(inline in PGE)* | `v1.6.0` | `BESS-JPL>=1.15.0`, `PTJPLSM>=1.3.0`, `FLiESLUT>=1.0.3` | Wired `GEDI`, `MODISCI`, and `SoilGrids` auxiliary data directories. |
 | **2025-10-01** | *(inline in PGE)* | `v1.10.0` | `AquaSEBS`, `ECOv002-granules~=1.2.1`, `ECOv003-granules~=1.10.0` | Integrated `AquaSEBS` open-water evaporation & dual-collection input. |
 | **2025-11-12** | *(inline in PGE)* | `v1.11.0` | `AquaSEBS~=1.1.0`, `BESS-JPL~=1.20.0`, `FLiESANN~=2.1.0`, `PM-JPL~=1.7.0`, `PTJPLSM~=1.9.0`, `STIC-JPL~=1.4.0` | SI unit naming (`_Wm2`, `_deg`, `_m`), daylight upscaling, ET partitioning. |
-| **2025-11-18** | *(inline in PGE)* | `v1.13.0` | Container `v1.7.0` / `v1.7.1`, `L2T-STARS>=1.11.0` | Modularized `JET.py` & `process_JET_table.py`; entered C3 production. |
+| **2025-11-18** | *(inline in PGE)* | `v1.13.0` | Container `v1.7.0` / `v1.7.1`, `L2T-STARS>=1.11.0` | Modularized `JET.py` & `process_JET_table.py`; introduced `verify.py`; entered C3 production. |
 | **2026-01-30** | *(extracted)* | `v1.16.0` | `AquaSEBS~=1.3.0`, `BESS-JPL~=1.28.0`, `FLiESANN~=2.13.0`, `GEOS5FP~=2.19.0`, `PM-JPL~=1.11.0`, `PTJPLSM~=1.10.0`, `STIC-JPL~=1.6.0` | Extracted `JET3` package; locked 11-month C3 reference baseline. |
-| **2026-02-18** | `v3.0.1` | `v1.16.0` | `verma-net-radiation~=1.11.0`, `SEBAL-soil-heat-flux` | First standalone `JET3` release on GitHub/PyPI. |
+| **2026-02-18** | `v3.0.0` / `v3.0.1` | `v1.16.0` | `verma-net-radiation~=1.11.0`, `SEBAL-soil-heat-flux` | Initial standalone `JET3` commit (`ed6a1ef0`) & release with `verify()`. |
 | **2026-04-28** | `v3.1.0` | `v1.16.0` | `scikit-learn`, `statsmodels` | Added OLS calibration/UQ & migrated sharpening procedures into `JET3`. |
 | **2026-11-02** | `v3.1.0` | `v1.18.0` | — | Suomi NPP VIIRS (`VNP43NRT`) decommissioned; JPSS transition begins. |
 | **2026-11-19** | `v3.1.0` | `v1.22.0` | `GEOS5FP~=2.24.0`, `numpy~=2.5.4`, `pandas~=3.1.1`, `rasterio~=1.5.2` | Multi-stage Docker runtime, `argparse` CLI, and smoke tests. |
 | **2026-11-20** | `v3.1.0` → `v3.1.1` *(planned)* | `v1.22.1` | `JET3~=3.1.1`, `GEOS5FP~=2.24.0` | Diagnosed `GEOS5FP` API mismatch (`wind_speed_mps`, `Td_K`); filed `JET3` issues `#14`–`#18`. |
+
+### Baseline Verification & Output Consistency
+
+Because `JET3` was extracted *after* the initial Collection 3 forward-processing deployment (`eco-level-2-3-4-application` `v1.7.0` / `v1.7.1`), `JET3` has included a built-in verification suite (`JET3/verify.py` and `tests/test_verify.py`) since its initial commit (`ed6a1ef0`, `v3.0.0`).
+
+- **Core Physics & Tabular Ensemble (`JET3.verify()`):** Running `verify()` executes `process_JET_table(..., offline_mode=True)` on the ECOSTRESS Collection 2 Cal-Val input table (`ECOv002-cal-val-JET-inputs.csv`) and checks 22 output variables (`LE_*_Wm2`, `ET_daylight_*_kg`, `ET_daylight_kg`, `ET_uncertainty`, canopy/soil/interception fractions, `Ta_C`, `RH`, `Rn_Wm2`, `SM`, `ESI_PTJPLSM`, `PET_instantaneous_PTJPLSM_Wm2`, `WUE`, and `GPP_inst_g_m2_s`) against the frozen `ECOv002-cal-val-JET-outputs.csv` reference (`rtol=1e-4, atol=1e-7`). Passing `verify()` confirms that core radiative transfer (`FLiES-ANN`, `verma_net_radiation`, `SEBAL_soil_heat_flux`) and terrestrial ensemble calculations (`PT-JPL-SM`, `STIC-JPL`, `PM-JPL`, `BESS-JPL`) have not drifted from the initial Collection 3 deployment baseline when given pre-supplied forcing (`use_calibration=False`).
+- **Gridded & Online Execution Paths:** Because `verify()` runs `process_JET_table(..., offline_mode=True)` on point geometries (`include_water_surface=False`), three gridded/online code paths added or exercised during PGE runs require separate regression coverage in `JET3 v3.1.1`:
+  1. **Spatial downscaling (`sharpen_meteorology_data` / `sharpen_soil_moisture_data`):** Added in `v3.1.0`; `GEOS5FP_connection.Td_C(...)` fails against `GEOS5FP>=2.24.0` (`Td_K`), causing meteorology sharpening to fall back silently to coarse GEOS-5 FP fields on raster scenes.
+  2. **Dynamic `GEOS-5 FP` retrieval (`wind_speed_mps`, `elevation`):** Added to `JET()` in `v3.1.0`; `GEOS5FP_connection.wind_speed(...)` and `GEOS5FP_connection.elevation(...)` fail against `GEOS5FP>=2.24.0` when those inputs are omitted.
+  3. **Open-water overlay (`AquaSEBS` when `include_water_surface=True`):** `ET_daylight_AquaSEBS_kg` is overlaid wherever non-NaN rather than gating on `water_mask` (Issue [#14](https://github.com/JPL-Evapotranspiration-Algorithms/JET3/issues/14)).
 
 ## Known Issues
 
