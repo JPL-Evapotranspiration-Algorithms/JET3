@@ -204,6 +204,39 @@ The validation results indicate varying performance across different ecosystem t
 
 The JET3 ensemble provides reliable ET estimates suitable for water resource management, agricultural monitoring, and ecosystem research applications.
 
+## Repository History
+
+The `JET3` codebase originated inside [`ECOv003-L3T-L4T-JET`](https://github.com/ECOSTRESS-Collection-3/ECOv003-L3T-L4T-JET) (the ECOSTRESS Collection 3 Product Generating Executable) before being extracted into a standalone, mission-independent library in early 2026. For a complete chronological narrative, see [`notes/2026-11-20 repository history.md`](notes/2026-11-20%20repository%20history.md).
+
+| Date | `JET3` Version | `ECOv003-L3T-L4T-JET` | Key Constituent Model / Infra Versions | Milestone |
+| :--- | :--- | :--- | :--- | :--- |
+| **2025-05-21** | *(inline in PGE)* | `v1.0.1` | `BESS-JPL>=1.9.2`, `PM-JPL>=1.4.0`, `PTJPLSM>=1.2.0`, `STIC-JPL`, `FLiESANN`, `verma-net-radiation` | Initial Collection 3 port; unified `L3T ETAUX` product. |
+| **2025-06-24** | *(inline in PGE)* | `v1.1.0` | `ECOv003-exit-codes` | Extracted `sharpen_meteorology_data` & `sharpen_soil_moisture_data`. |
+| **2025-07-28** | *(inline in PGE)* | `v1.6.0` | `BESS-JPL>=1.15.0`, `PTJPLSM>=1.3.0`, `FLiESLUT>=1.0.3` | Wired `GEDI`, `MODISCI`, and `SoilGrids` auxiliary data directories. |
+| **2025-10-01** | *(inline in PGE)* | `v1.10.0` | `AquaSEBS`, `ECOv002-granules~=1.2.1`, `ECOv003-granules~=1.10.0` | Integrated `AquaSEBS` open-water evaporation & dual-collection input. |
+| **2025-11-12** | *(inline in PGE)* | `v1.11.0` | `AquaSEBS~=1.1.0`, `BESS-JPL~=1.20.0`, `FLiESANN~=2.1.0`, `PM-JPL~=1.7.0`, `PTJPLSM~=1.9.0`, `STIC-JPL~=1.4.0` | SI unit naming (`_Wm2`, `_deg`, `_m`), daylight upscaling, ET partitioning. |
+| **2025-11-18** | *(inline in PGE)* | `v1.13.0` | Container `v1.7.0` / `v1.7.1`, `L2T-STARS>=1.11.0` | Modularized `JET.py` & `process_JET_table.py`; entered C3 production. |
+| **2026-01-30** | *(extracted)* | `v1.16.0` | `AquaSEBS~=1.3.0`, `BESS-JPL~=1.28.0`, `FLiESANN~=2.13.0`, `GEOS5FP~=2.19.0`, `PM-JPL~=1.11.0`, `PTJPLSM~=1.10.0`, `STIC-JPL~=1.6.0` | Extracted `JET3` package; locked 11-month C3 reference baseline. |
+| **2026-02-18** | `v3.0.1` | `v1.16.0` | `verma-net-radiation~=1.11.0`, `SEBAL-soil-heat-flux` | First standalone `JET3` release on GitHub/PyPI. |
+| **2026-04-28** | `v3.1.0` | `v1.16.0` | `scikit-learn`, `statsmodels` | Added OLS calibration/UQ & migrated sharpening procedures into `JET3`. |
+| **2026-11-02** | `v3.1.0` | `v1.18.0` | — | Suomi NPP VIIRS (`VNP43NRT`) decommissioned; JPSS transition begins. |
+| **2026-11-19** | `v3.1.0` | `v1.22.0` | `GEOS5FP~=2.24.0`, `numpy~=2.5.4`, `pandas~=3.1.1`, `rasterio~=1.5.2` | Multi-stage Docker runtime, `argparse` CLI, and smoke tests. |
+| **2026-11-20** | `v3.1.0` → `v3.1.1` *(planned)* | `v1.22.1` | `JET3~=3.1.1`, `GEOS5FP~=2.24.0` | Diagnosed `GEOS5FP` API mismatch (`wind_speed_mps`, `Td_K`); filed `JET3` issues `#14`–`#18`. |
+
+## Known Issues
+
+The following known issues are tracked in [`notes/2026-11-20 JET3 Known Issues.md`](notes/2026-11-20%20JET3%20Known%20Issues.md) and on the [GitHub Issue Tracker](https://github.com/JPL-Evapotranspiration-Algorithms/JET3/issues) for `JET3 v3.1.0`:
+
+| Issue | Severity | Component | Summary |
+| :--- | :--- | :--- | :--- |
+| **[#14](https://github.com/JPL-Evapotranspiration-Algorithms/JET3/issues/14)** | High | `JET3/JET.py` | AquaSEBS daylight ET overwrites valid land `ET_daylight_kg` when `water_mask` is `None` or `False` |
+| **[#15](https://github.com/JPL-Evapotranspiration-Algorithms/JET3/issues/15)** | High | `JET3/process_JET_table.py` | `process_JET_table` raises `AttributeError` on missing optional inputs (`Tmin_C`, online met/SM) or `'Ta'` column alias |
+| **[#16](https://github.com/JPL-Evapotranspiration-Algorithms/JET3/issues/16)** | Low | `JET3/JET.py` | Duplicate `BlankOutput` check inspects `LE_PTJPLSM_Wm2` twice instead of `ET_daylight_PTJPLSM_kg` |
+| **[#17](https://github.com/JPL-Evapotranspiration-Algorithms/JET3/issues/17)** | Medium | `JET3/Ta_C_error_OLS.py`, `pyproject.toml` | Stale `ECOv003_L3T_L4T_JET` package references break standalone ONNX model loading and package metadata |
+| **[#18](https://github.com/JPL-Evapotranspiration-Algorithms/JET3/issues/18)** | Low | `JET3/constants.py` | Duplicate constant definitions for `GEOS_IN_SENTINEL_COARSE_CELL_SIZE` and `SHARPEN_METEOROLOGY` |
+
+In addition, `JET3 v3.1.0` contains legacy `GEOS5FPConnection` method calls (`wind_speed(...)`, `Td_C(...)`, and `elevation(...)`) that are incompatible with `GEOS5FP>=2.24.0` (`wind_speed_mps(...)`, `Td_K(...)`) and are scheduled for resolution in `JET3 v3.1.1`.
+
 ## Acknowledgements 
 
 We would like to thank Joshua Fisher as the initial science lead of the ECOSTRESS mission and PI of the ROSES project to develop the JET ensemble approach.
