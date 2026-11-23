@@ -127,3 +127,84 @@ compile-documentation:
 	bash documentation/ECOv003_L3_L4_JET_ATBD.sh
 	# Run the shell script to compile the User Guide to PDF
 	bash documentation/ECOv003_L3_L4_JET_User_Guide.sh
+
+# Core package, tests, and docs (~30k–60k tokens)
+repomix:
+	npx repomix --ignore "**/*.csv,**/*.tsv,**/*.svg,**/*.egg-info/**,**/*.ipynb,LICENSE" --copy
+
+# Pack notebooks (stripping images/HTML and truncating long text outputs) and copy to clipboard
+copy-notebooks:
+	rm -rf /tmp/jet_nb
+	mkdir -p /tmp/jet_nb
+	python -c 'import glob, json, os; trim = lambda x: ("".join(x) if isinstance(x, list) else x)[:1500]; [json.dump({**nb, "cells": [{**c, "outputs": [{**o, **({"data": {"text/plain": trim(o["data"]["text/plain"])}} if "data" in o and "text/plain" in o["data"] else {"data": {}} if "data" in o else {}), **({"text": trim(o["text"])} if "text" in o else {})} for o in c.get("outputs", [])]} for c in nb.get("cells", [])]}, open(os.path.join("/tmp/jet_nb", os.path.basename(p)), "w")) for p in glob.glob("notebooks/*.ipynb") if not p.endswith("copy.ipynb") for nb in [json.load(open(p))]]'
+	npx repomix /tmp/jet_nb --copy
+	rm -rf /tmp/jet_nb repomix-output.xml
+
+# Pack notebooks (stripping images/HTML and truncating long text outputs) into repomix-notebooks.xml
+pack-notebooks:
+	rm -rf /tmp/jet_nb
+	mkdir -p /tmp/jet_nb
+	python -c 'import glob, json, os; trim = lambda x: ("".join(x) if isinstance(x, list) else x)[:1500]; [json.dump({**nb, "cells": [{**c, "outputs": [{**o, **({"data": {"text/plain": trim(o["data"]["text/plain"])}} if "data" in o and "text/plain" in o["data"] else {"data": {}} if "data" in o else {}), **({"text": trim(o["text"])} if "text" in o else {})} for o in c.get("outputs", [])]} for c in nb.get("cells", [])]}, open(os.path.join("/tmp/jet_nb", os.path.basename(p)), "w")) for p in glob.glob("notebooks/*.ipynb") if not p.endswith("copy.ipynb") for nb in [json.load(open(p))]]'
+	npx repomix /tmp/jet_nb -o repomix-notebooks.xml
+	rm -rf /tmp/jet_nb
+
+# Execute active notebooks in an isolated temp dir and render PDFs with a pass/fail traceback report
+render-notebooks:
+	python notebooks/render_notebooks.py
+
+generate-history:
+	fish -c ' \
+		git fetch --tags --quiet; \
+		set first_commit (git rev-list --max-parents=0 HEAD | head -n 1); \
+		set releases (gh release list --limit 1000 --json tagName,createdAt --jq "sort_by(.createdAt) | .[].tagName"); \
+		begin; \
+			echo "========================================"; \
+			echo "REPOSITORY RELEASE TIMELINE"; \
+			echo "========================================"; \
+			gh release list --limit 1000; \
+			echo ""; \
+			if test (count $$releases) -ge 1; \
+				set first_rel $$releases[1]; \
+				echo "========================================"; \
+				echo "INITIAL COMMIT ($$first_commit) -> FIRST RELEASE ($$first_rel)"; \
+				echo "========================================"; \
+				git log --reverse --stat -p $$first_commit^..$$first_rel -- "*.py" "pyproject.toml"; \
+				echo ""; \
+			end; \
+			if test (count $$releases) -ge 2; \
+				for i in (seq 2 (count $$releases)); \
+					set prev_idx (math $$i - 1); \
+					set prev $$releases[$$prev_idx]; \
+					set curr $$releases[$$i]; \
+					echo "========================================"; \
+					echo "RELEASE COMMIT HISTORY: $$prev -> $$curr"; \
+					echo "========================================"; \
+					git log --reverse --stat -p $$prev..$$curr -- "*.py" "pyproject.toml"; \
+					echo ""; \
+				end; \
+			end; \
+			if test (count $$releases) -ge 1; \
+				set latest_rel $$releases[-1]; \
+				echo "========================================"; \
+				echo "LATEST RELEASE ($$latest_rel) -> CURRENT WORKING TREE (HEAD + UNCOMMITTED)"; \
+				echo "========================================"; \
+				git log --reverse --stat -p $$latest_rel..HEAD -- "*.py" "pyproject.toml"; \
+				echo ""; \
+				git status -s -- "*.py" "pyproject.toml"; \
+				echo ""; \
+				git diff HEAD -- "*.py" "pyproject.toml"; \
+			else; \
+				echo "========================================"; \
+				echo "INITIAL COMMIT ($$first_commit) -> CURRENT WORKING TREE"; \
+				echo "========================================"; \
+				git log --reverse --stat -p -- "*.py" "pyproject.toml"; \
+				echo ""; \
+				git status -s -- "*.py" "pyproject.toml"; \
+				echo ""; \
+				git diff HEAD -- "*.py" "pyproject.toml"; \
+			end; \
+		end > release_diffs.patch; \
+	'
+
+show-issues:
+	gh issue list --state open --json number,title,body --template '{{range .}}## #{{.number}}: {{.title}}{{"\n\n"}}{{.body}}{{"\n\n---\n\n"}}{{end}}'

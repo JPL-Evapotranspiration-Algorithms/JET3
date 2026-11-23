@@ -28,26 +28,6 @@ def sharpen_meteorology_data(
 ) -> tuple[Raster, Raster, Raster]:
     """
     Sharpens air temperature and relative humidity using a linear regression model.
-
-    Args:
-        ST_C: Surface temperature in Celsius (fine resolution).
-        NDVI: Normalized Difference Vegetation Index (fine resolution).
-        albedo: Albedo (fine resolution).
-        geometry: Fine-resolution raster geometry.
-        coarse_geometry: Coarse-resolution raster geometry.
-        time_UTC: UTC timestamp of the overpass.
-        upsampling: Upsampling method for spatial resampling.
-        downsampling: Downsampling method for spatial resampling.
-        GEOS5FP_connection: An instance of the GEOS5FP connection.
-
-    Returns:
-        A tuple containing:
-            - Ta_C: Sharpened air temperature in Celsius.
-            - RH: Sharpened relative humidity.
-            - Ta_C_smooth: Coarse-resolution air temperature from GEOS-5 FP (for gap-filling).
-
-    Raises:
-        BlankOutput: If the sharpened air temperature or humidity output is blank.
     """
     if GEOS5FP_connection is None:
         GEOS5FP_connection = GEOS5FPConnection()
@@ -63,9 +43,9 @@ def sharpen_meteorology_data(
         time_UTC=time_UTC, geometry=coarse_geometry, resampling=downsampling
     )
     check_distribution(Ta_C_coarse, "Ta_C_coarse")
-    Td_C_coarse = GEOS5FP_connection.Td_C(
+    Td_C_coarse = GEOS5FP_connection.Td_K(
         time_UTC=time_UTC, geometry=coarse_geometry, resampling=downsampling
-    )
+    ) - 273.15
     check_distribution(Td_C_coarse, "Td_C_coarse")
     SM_coarse = GEOS5FP_connection.SM(
         time_UTC=time_UTC, geometry=coarse_geometry, resampling=downsampling
@@ -171,7 +151,7 @@ def sharpen_meteorology_data(
     logger.info("bias-correcting dew-point temperature")
     Td_C = Td_C_prediction - Td_C_bias_smooth
     check_distribution(Td_C, "Td_C")
-    Td_C_smooth = GEOS5FP_connection.Td_C(time_UTC=time_UTC, geometry=geometry, resampling=downsampling)
+    Td_C_smooth = GEOS5FP_connection.Td_K(time_UTC=time_UTC, geometry=geometry, resampling=downsampling) - 273.15
     check_distribution(Td_C_smooth, "Td_C_smooth")
     logger.info("gap-filling dew-point temperature")
     Td_C = rt.where(np.isnan(Td_C), Td_C_smooth, Td_C)

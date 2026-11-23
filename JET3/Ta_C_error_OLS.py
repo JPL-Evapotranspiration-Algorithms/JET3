@@ -27,7 +27,7 @@ class OnnxModelInfo:
 
 
 def get_ta_c_error_onnx_model_path() -> str:
-    model_path = resources.files("ECOv003_L3T_L4T_JET") / DEFAULT_ONNX_MODEL_FILENAME
+    model_path = resources.files("JET3") / DEFAULT_ONNX_MODEL_FILENAME
     return str(model_path)
 
 
@@ -109,23 +109,6 @@ def Ta_C_error_OLS(
 ):
     """
     Predict Ta_C_error using the embedded OLS ONNX model.
-
-    Parameters
-    ----------
-    data : pandas.DataFrame, optional
-        DataFrame containing all model features as columns. If provided,
-        columns are used as feature inputs unless feature_order is supplied.
-    feature_order : Sequence[str], optional
-        Explicit ordering of feature names. Useful if your input dict is
-        unordered or if you want to enforce a known model feature ordering.
-    **features : object
-        Feature arrays as numpy arrays, pandas Series, or rasters. Each feature
-        must share identical shape.
-
-    Returns
-    -------
-    numpy.ndarray or pandas.Series or rasters.Raster
-        Prediction array in the same format as the input features.
     """
     if data is not None:
         if not isinstance(data, pd.DataFrame):

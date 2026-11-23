@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "JET3"
-version = "3.1.0"
+version = "3.2.0"
 description = "Jet Propulsion Laboratory Evapotranspiration Ensemble ECOSTRESS Collection 3"
 readme = "README.md"
 authors = [
@@ -20,8 +20,10 @@ dependencies = [
     "check-distribution",
     "ECOv002-calval-tables>=1.13.0",
     "FLiESANN",
-    "GEOS5FP",
+    "gedi-canopy-height",
+    "GEOS5FP>=2.24.0",
     "MODISCI",
+    "NASADEM>=2.2.1",
     "numpy",
     "onnxruntime",
     "pandas",
@@ -52,16 +54,13 @@ dev = [
 ]
 
 [tool.setuptools.package-data]
-ECOv003_L3T_L4T_JET = ["*.xml", "*.onnx"]
+JET3 = ["*.csv", "*.xml", "*.onnx"]
 
 [project.urls]
-"Homepage" = "https://github.com/ECOSTRESS-Collection-2/ECOv003-L3T-L4T-JET"
+"Homepage" = "https://github.com/JPL-Evapotranspiration-Algorithms/JET3"
 
 [tool.setuptools.packages.find]
 exclude = ["notebooks*", "examples*", "debugging*", "performance*"]
-
-[project.scripts]
-ECOv003-L3T-L4T-JET = "ECOv003_L3T_L4T_JET.ECOv003_L3T_L4T_JET:main"
 
 [tool.pytest.ini_options]
 filterwarnings = [
