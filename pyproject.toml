@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "JET3"
-version = "3.2.0"
+version = "3.3.0"
 description = "Jet Propulsion Laboratory Evapotranspiration Ensemble ECOSTRESS Collection 3"
 readme = "README.md"
 authors = [
