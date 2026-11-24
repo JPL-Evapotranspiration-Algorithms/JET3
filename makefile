@@ -13,7 +13,7 @@ ARGS ?=
 
 .DEFAULT_GOAL := help
 
-.PHONY: help clean test verify wheel sdist build twine-upload dist \
+.PHONY: help clean test verify build wheel sdist twine-upload dist \
         install uninstall reinstall environment remove-environment \
         generate-input-dataset generate-output-dataset generate-GEOS5FP-inputs \
         colima-start docker-build docker-build-environment docker-build-installation \
@@ -89,30 +89,30 @@ generate-GEOS5FP-inputs: ## Generate GEOS-5 FP input table
 	python -c "from $(MODULE_NAME).generate_GEOS5FP_inputs import generate_GEOS5FP_inputs; generate_GEOS5FP_inputs()"
 
 ##@ Docker & Colima
-colima-start: ## Start Colima with 16GB RAM, x86_64 architecture, and 100GB disk
+colima-start: ## Start Colima with specific resource settings
 	colima start -m 16 -a x86_64 -d 100
 
 docker-build: ## Build the Docker image
 	docker build -t $(DOCKER_IMAGE_NAME):latest .
 
-docker-build-environment: ## Build the Docker image up to the 'environment' stage
+docker-build-environment: ## Build the Docker image up to the 'environment' target stage
 	docker build --target environment -t $(DOCKER_IMAGE_NAME):latest .
 
-docker-build-installation: ## Build the Docker image up to the 'installation' stage
+docker-build-installation: ## Build the Docker image up to the 'installation' target stage
 	docker build --target installation -t $(DOCKER_IMAGE_NAME):latest .
 
-docker-interactive: ## Run the Docker container interactively with Fish shell
+docker-interactive: ## Run the Docker container interactively with the Fish shell
 	docker run -it $(DOCKER_IMAGE_NAME) fish
 
 docker-remove: ## Forcefully remove the Docker image
 	docker rmi -f $(DOCKER_IMAGE_NAME)
 
 ##@ Documentation & Notebooks
-compile-documentation: ## Compile ATBD and User Guide from Markdown to PDF
+compile-documentation: ## Compile the ATBD and User Guide from Markdown to PDF
 	bash documentation/ECOv003_L3_L4_JET_ATBD.sh
 	bash documentation/ECOv003_L3_L4_JET_User_Guide.sh
 
-render-notebooks: ## Execute active notebooks in isolation and render PDFs
+render-notebooks: ## Execute active notebooks in an isolated temp dir and render PDFs
 	python notebooks/render_notebooks.py
 
 copy-notebooks: ## Pack stripped notebooks and copy to clipboard
@@ -149,7 +149,7 @@ generate-history: ## Generate release commit history patch
 				echo "========================================"; \
 				echo "INITIAL COMMIT ($$first_commit) -> FIRST RELEASE ($$first_rel)"; \
 				echo "========================================"; \
-				git log --reverse --stat -p $$first_commit^..$$first_rel -- "*.py" "pyproject.toml"; \
+				git log --reverse --stat -p $$first_rel -- "*.py" "pyproject.toml"; \
 				echo ""; \
 			end; \
 			if test (count $$releases) -ge 2; \
