@@ -1,17 +1,53 @@
 import os
 import shutil
+import subprocess
 import sys
 import traceback
 from pathlib import Path
 
 import nbformat
-from nbconvert import WebPDFExporter
+from nbconvert import PDFExporter, WebPDFExporter
 from nbconvert.preprocessors import ExecutePreprocessor
 
 NOTEBOOKS_DIR = Path(__file__).resolve().parent
 REPO_ROOT = NOTEBOOKS_DIR.parent
 PDF_DIR = NOTEBOOKS_DIR / "pdf"
 WORK_DIR = Path("/tmp/jet_nb_exec")
+
+
+def _has_local_chromium() -> bool:
+    """Check if Playwright has a cached Chromium binary available locally."""
+    try:
+        from playwright.sync_api import sync_playwright
+
+        with sync_playwright() as p:
+            exe = Path(p.chromium.executable_path)
+            return exe.is_file()
+    except Exception:
+        return False
+
+
+def _has_local_latex() -> bool:
+    """Check if pandoc and a LaTeX engine (xelatex/pdflatex) are installed locally."""
+    has_pandoc = shutil.which("pandoc") is not None
+    has_tex = any(shutil.which(cmd) is not None for cmd in ("xelatex", "pdflatex", "lualatex"))
+    return has_pandoc and has_tex
+
+
+def get_local_exporter():
+    """Select an offline-capable PDF exporter, preferring local WebPDF with LaTeX fallback."""
+    if _has_local_chromium():
+        print("Using local WebPDFExporter (cached Chromium found).")
+        return WebPDFExporter(allow_chromium_download=False)
+
+    if _has_local_latex():
+        print("Local Chromium not found; falling back to local LaTeX PDFExporter.")
+        return PDFExporter()
+
+    raise RuntimeError(
+        "No local PDF rendering backend found. Install Chromium offline via "
+        "'playwright install chromium' or install pandoc + TeX Live/MacTeX."
+    )
 
 
 def render_all():
@@ -22,13 +58,16 @@ def render_all():
     env_pythonpath = os.environ.get("PYTHONPATH", "")
     os.environ["PYTHONPATH"] = f"{REPO_ROOT}:{env_pythonpath}" if env_pythonpath else str(REPO_ROOT)
 
+    # Disable automatic downloads in nbconvert/playwright
+    os.environ["PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD"] = "1"
+
+    exporter = get_local_exporter()
+    ep = ExecutePreprocessor(timeout=1800, kernel_name="python3")
+
     notebooks = sorted(NOTEBOOKS_DIR.glob("*.ipynb"))
     print(f"Found {len(notebooks)} notebooks in {NOTEBOOKS_DIR}")
     succeeded = []
     failed = []
-
-    ep = ExecutePreprocessor(timeout=1800, kernel_name="python3")
-    exporter = WebPDFExporter(allow_chromium_download=True)
 
     for nb_path in notebooks:
         print(f"\n>>> Running: {nb_path.name}")
