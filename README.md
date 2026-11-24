@@ -12,15 +12,34 @@ JET3 is part of the [JPL-Evapotranspiration-Algorithms](https://github.com/JPL-E
 
 [Gregory H. Halverson](https://github.com/gregory-halverson-jpl) (they/them)<br>
 [gregory.h.halverson@jpl.nasa.gov](mailto:gregory.h.halverson@jpl.nasa.gov)<br>
-NASA Jet Propulsion Laboratory 329G
+NASA Jet Propulsion Laboratory 321H
 
 Kerry Cawse-Nicholson (she/her)<br>
-NASA Jet Propulsion Laboratory 329G
+NASA Jet Propulsion Laboratory 321H
 
 Madeleine Pascolini-Campbell (she/her)<br>
-NASA Jet Propulsion Laboratory 329F
+NASA Jet Propulsion Laboratory 321E
 
-This package has been developed using open-science practices with New Technology Report (NTR) and open-source license from NASA Jet Propulsion Laboratory. The code is based on algorithms originally developed for the ECOSTRESS mission and refined for broader applications.
+## Citing This Package
+
+If you use the `JET3` Python package in your research or software, please cite it as:
+
+```text
+Halverson, G. H., Cawse-Nicholson, K., & Pascolini-Campbell, M. (2026). JET3: JPL Evapotranspiration Ensemble Algorithm (Version 3.3.0) [Computer software]. NASA Jet Propulsion Laboratory. [https://github.com/JPL-Evapotranspiration-Algorithms/JET3](https://github.com/JPL-Evapotranspiration-Algorithms/JET3)
+```
+
+**BibTeX:**
+
+```bibtex
+@software{Halverson_JET3_2026,
+  author       = {Halverson, Gregory H. and Cawse-Nicholson, Kerry and Pascolini-Campbell, Madeleine},
+  title        = {{JET3}: {JPL} Evapotranspiration Ensemble Algorithm},
+  year         = {2026},
+  version      = {3.3.0},
+  institution  = {NASA Jet Propulsion Laboratory},
+  url          = {[https://github.com/JPL-Evapotranspiration-Algorithms/JET3](https://github.com/JPL-Evapotranspiration-Algorithms/JET3)}
+}
+```
 
 ## Introduction 
 
@@ -39,6 +58,8 @@ JET3 implements an ensemble approach combining four scientifically-validated mod
 
 The ensemble median provides robust ET estimates with reduced uncertainty compared to individual models.
 
+This package has been developed using open-science practices with New Technology Report (NTR) and open-source license from NASA Jet Propulsion Laboratory. The code is based on algorithms originally developed for the ECOSTRESS mission and refined for broader applications.
+
 ### Required Inputs
 
 JET3 requires the following core input variables:
@@ -48,7 +69,7 @@ JET3 requires the following core input variables:
 - **Albedo**: Surface albedo
 - **Air temperature (Ta_C)**: Near-surface air temperature in Celsius
 - **Relative humidity (RH)**: Near-surface relative humidity (0-1)
-- **Soil moisture (soil_moisture)**: Volumetric soil moisture (m³/m³)
+- **Soil moisture (soil_moisture)**: Volumetric soil moisture ($\text{m}^3/\text{m}^3$)
 - **Geometry (geometry)**: Spatial geometry object for raster or point processing
 - **Time (time_UTC)**: Observation timestamp(s) in UTC
 
@@ -126,32 +147,32 @@ The AquaSEBS model implements the surface energy balance equation specifically a
 
 $$R_n = LE + H + W$$
 
-Where the water heat flux (W) is calculated using the equilibrium temperature model:
+Where the water heat flux ($W$) is calculated using the equilibrium temperature model:
 
-$$W = eta 	imes (T_e - WST)$$
+$$W = \beta \times (T_e - WST)$$
 
 The key parameters include:
-- **Temperature difference**: $T_n = 0.5 	imes (WST - T_d)$ where WST is water surface temperature and $T_d$ is dew point temperature
-- **Evaporation efficiency**: $\eta = 0.35 + 0.015 	imes WST + 0.0012 	imes T_n^2$
-- **Thermal exchange coefficient**: $eta = 4.5 + 0.05 	imes WST + (\eta + 0.47) 	imes S$
-- **Equilibrium temperature**: $T_e = T_d + rac{SW_{net}}{eta}$
+- **Temperature difference**: $T_n = 0.5 \times (WST - T_d)$ where $WST$ is water surface temperature and $T_d$ is dew point temperature
+- **Evaporation efficiency**: $\eta = 0.35 + 0.015 \times WST + 0.0012 \times T_n^2$
+- **Thermal exchange coefficient**: $\beta = 4.5 + 0.05 \times WST + (\eta + 0.47) \times S$
+- **Equilibrium temperature**: $T_e = T_d + \frac{SW_{net}}{\beta}$
 
-Latent heat flux is then calculated using the Priestley-Taylor equation with α = 1.26 for water surfaces:
+Latent heat flux is then calculated using the Priestley-Taylor equation with $\alpha = 1.26$ for water surfaces:
 
-$$LE = lpha 	imes rac{\Delta}{\Delta + \gamma} 	imes (R_n - W)$$
+$$LE = \alpha \times \frac{\Delta}{\Delta + \gamma} \times (R_n - W)$$
 
 #### Validation and Accuracy
 
 The AquaSEBS methodology has been extensively validated against 19 in situ open water evaporation sites worldwide spanning multiple climate zones. Performance metrics include:
 
 **Daily evaporation estimates:**
-- **MODIS-based**: r² = 0.47, RMSE = 1.5 mm/day (41% of mean), Bias = 0.19 mm/day
-- **Landsat-based**: r² = 0.56, RMSE = 1.2 mm/day (38% of mean), Bias = -0.8 mm/day
+- **MODIS-based**: $r^2 = 0.47$, RMSE = 1.5 mm/day (41% of mean), Bias = 0.19 mm/day
+- **Landsat-based**: $r^2 = 0.56$, RMSE = 1.2 mm/day (38% of mean), Bias = -0.8 mm/day
 
 **Instantaneous estimates (controlled for high wind events >7.5 m/s):**
-- **Correlation**: r² = 0.71
-- **RMSE**: 53.7 W/m² (38% of mean)
-- **Bias**: -19.1 W/m² (13% of mean)
+- **Correlation**: $r^2 = 0.71$
+- **RMSE**: 53.7 $\text{W/m}^2$ (38% of mean)
+- **Bias**: -19.1 $\text{W/m}^2$ (13% of mean)
 
 The model demonstrates particular strength in water-limited environments and performs well across spatial scales from 30m (Landsat) to 1km (MODIS) resolution.
 
@@ -162,14 +183,14 @@ Water surface evaporation estimates are included in the `ET_daylight_kg` output 
 The PT-JPL-SM model generates estimates of both actual and potential instantaneous ET. The potential evapotranspiration (PET) estimate represents the maximum expected ET if there were no water stress to plants on the ground. The ratio of the actual ET estimate to the PET estimate forms an index representing the water stress of plants, with zero being fully stressed with no observable ET and one being non-stressed with ET reaching PET.
 
 **Evaporative Stress Index (ESI)**: 
-$$	ext{ESI} = rac{	ext{ET}_{	ext{actual}}}{	ext{PET}}$$
+$$\text{ESI} = \frac{\text{ET}_{\text{actual}}}{\text{PET}}$$
 
 Water Use Efficiency (WUE) relates the amount of carbon that plants are taking in (GPP from BESS-JPL) to the amount of water that plants are releasing (transpiration from PT-JPL-SM):
 
 **Water Use Efficiency (WUE)**:
-$$	ext{WUE} = rac{	ext{GPP}}{	ext{Transpiration}}$$
+$$\text{WUE} = \frac{\text{GPP}}{\text{Transpiration}}$$
 
-WUE is expressed as the ratio of grams of carbon that plants take in to kilograms of water that plants release ($	ext{g C kg}^{-1} 	ext{H}_2	ext{O}$).
+WUE is expressed as the ratio of grams of carbon that plants take in to kilograms of water that plants release ($\text{g C kg}^{-1} \text{H}_2\text{O}$).
 
 ## Theory
 
@@ -187,7 +208,7 @@ The ensemble median approach reduces model-specific biases and provides more rob
 
 The JET ensemble approach has been validated against flux tower measurements from the FLUXNET network as documented in Pierrat et al. (2025) and through the ECOSTRESS mission. The validation demonstrated that the ensemble evapotranspiration estimates:
 
-- Show strong correlation with flux tower measurements (R² > 0.7) across most biomes
+- Show strong correlation with flux tower measurements ($R^2 > 0.7$) across most biomes
 - Capture the diurnal and seasonal patterns of evapotranspiration effectively
 - Perform well in water-limited ecosystems where thermal stress indicators are most valuable
 - Benefit from the ensemble approach, with the median estimate generally outperforming individual models
@@ -206,7 +227,7 @@ The JET3 ensemble provides reliable ET estimates suitable for water resource man
 
 ## Repository History
 
-The `JET3` codebase originated inside [`ECOv003-L3T-L4T-JET`](https://github.com/ECOSTRESS-Collection-3/ECOv003-L3T-L4T-JET) (the ECOSTRESS Collection 3 Product Generating Executable) before being extracted into a standalone, mission-independent library in early 2026 (`v3.0.0` / `v3.0.1` on February 18, 2026), roughly three months after ECOSTRESS Collection 3 entered operational forward processing (`eco-level-2-3-4-application` `v1.7.0` / `v1.7.1`, paired with `ECOv003-L3T-L4T-JET v1.13.0`–`v1.16.0`). For the full chronological narrative and baseline audit, see [`notes/2026-11-20 repository history.md`](notes/2026-11-20%20repository%20history.md) and [`notes/2026-11-20 JET3 Development Plan.md`](notes/2026-11-20%20JET3%20Development%20Plan.md).
+The `JET3` codebase originated inside [`ECOv003-L3T-L4T-JET`](https://github.com/ECOSTRESS-Collection-3/ECOv003-L3T-L4T-JET) (the ECOSTRESS Collection 3 Product Generating Executable) before being extracted into a standalone, mission-independent library in early 2026 (`v3.0.0` / `v3.0.1` on February 18, 2026), roughly three months after ECOSTRESS Collection 3 entered operational forward processing (`eco-level-2-3-4-application` `v1.7.0` / `v1.7.1`, paired with `ECOv003-L3T-L4T-JET v1.13.0`–`v1.16.0`). For the full chronological narrative, root-cause investigation, and `v3.3.0` specification, see [`notes/2026-11-23 development plan.md`](notes/2026-11-23%20development%20plan.md), [`notes/2026-11-23 ECOv003-L3T-L4T-JET solar radiation discrepency.md.md`](notes/2026-11-23%20ECOv003-L3T-L4T-JET%20solar%20radiation%20discrepency.md.md), and [`notes/2026-11-23 JET3 solar radiation issue.md.md`](notes/2026-11-23%20JET3%20solar%20radiation%20issue.md.md).
 
 | Date | `JET3` Version | `ECOv003-L3T-L4T-JET` | Key Constituent Model / Infra Versions | Milestone |
 | :--- | :--- | :--- | :--- | :--- |
@@ -214,25 +235,34 @@ The `JET3` codebase originated inside [`ECOv003-L3T-L4T-JET`](https://github.com
 | **2025-06-24** | *(inline in PGE)* | `v1.1.0` | `ECOv003-exit-codes` | Extracted `sharpen_meteorology_data` & `sharpen_soil_moisture_data`. |
 | **2025-07-28** | *(inline in PGE)* | `v1.6.0` | `BESS-JPL>=1.15.0`, `PTJPLSM>=1.3.0`, `FLiESLUT>=1.0.3` | Wired `GEDI`, `MODISCI`, and `SoilGrids` auxiliary data directories. |
 | **2025-10-01** | *(inline in PGE)* | `v1.10.0` | `AquaSEBS`, `ECOv002-granules~=1.2.1`, `ECOv003-granules~=1.10.0` | Integrated `AquaSEBS` open-water evaporation & dual-collection input. |
-| **2025-11-12** | *(inline in PGE)* | `v1.11.0` | `AquaSEBS~=1.1.0`, `BESS-JPL~=1.20.0`, `FLiESANN~=2.1.0`, `PM-JPL~=1.7.0`, `PTJPLSM~=1.9.0`, `STIC-JPL~=1.4.0` | SI unit naming (`_Wm2`, `_deg`, `_m`), daylight upscaling, ET partitioning. |
+| **2025-11-12** | *(inline in PGE)* | `v1.11.0` | `AquaSEBS~=1.1.0`, `BESS-JPL~=1.20.0`, `FLiESANN~=2.1.0`, `PM-JPL~=1.7.0`, `PTJPLSM~=1.9.0`, `STIC-JPL~=1.4.0` | SI unit naming (`_Wm2`, `_deg`, `_m`), raw `FLiES-ANN` `Rg`, daylight upscaling. |
 | **2025-11-18** | *(inline in PGE)* | `v1.13.0` | Container `v1.7.0` / `v1.7.1`, `L2T-STARS>=1.11.0` | Modularized `JET.py` & `process_JET_table.py`; introduced `verify.py`; entered C3 production. |
 | **2026-01-30** | *(extracted)* | `v1.16.0` | `AquaSEBS~=1.3.0`, `BESS-JPL~=1.28.0`, `FLiESANN~=2.13.0`, `GEOS5FP~=2.19.0`, `PM-JPL~=1.11.0`, `PTJPLSM~=1.10.0`, `STIC-JPL~=1.6.0` | Extracted `JET3` package; locked 11-month C3 reference baseline. |
 | **2026-02-18** | `v3.0.0` / `v3.0.1` | `v1.16.0` | `verma-net-radiation~=1.11.0`, `SEBAL-soil-heat-flux` | Initial standalone `JET3` commit (`ed6a1ef0`) & release with `verify()`. |
 | **2026-04-28** | `v3.1.0` | `v1.16.0` | `scikit-learn`, `statsmodels` | Added OLS calibration/UQ & migrated sharpening procedures into `JET3`. |
 | **2026-11-02** | `v3.1.0` | `v1.18.0` | — | Suomi NPP VIIRS (`VNP43NRT`) decommissioned; JPSS transition begins. |
 | **2026-11-19** | `v3.1.0` | `v1.22.0` | `GEOS5FP~=2.24.0`, `numpy~=2.5.4`, `pandas~=3.1.1`, `rasterio~=1.5.2` | Multi-stage Docker runtime, `argparse` CLI, and smoke tests. |
-| **2026-11-20** | `v3.2.0` | `v1.22.1` | `GEOS5FP>=2.24.0`, `NASADEM`, `gedi-canopy-height` | Resolved `JET3` issues `#14`–`#21` (`wind_speed_mps`, `Td_K`, `elevation_m`, `water_mask` gating, table aliases, package metadata). |
+| **2026-11-20** | `v3.2.0` | `v1.22.1` | `GEOS5FP>=2.24.0`, `NASADEM>=2.2.1`, `gedi-canopy-height` | Resolved `JET3` issues `#14`–`#21` (`wind_speed_mps`, `Td_K`, `elevation_m`, `water_mask` gating, table aliases, package metadata). |
+| **2026-11-23** | `v3.3.0` | `v1.23.0` | `GEOS5FP>=2.27.0` | Resolved `#23`: kept `BIAS_CORRECT_FLIES_ANN = False` default, added opt-in `bias_correct_FLiES_ANN`, pinned `GEOS5FP>=2.27.0` (`vapor_gccm`/`ozone_cm` raster unit fix), and added unit-range guardrails. |
 
 ### Baseline Verification & Output Consistency
 
 Because `JET3` was extracted *after* the initial Collection 3 forward-processing deployment (`eco-level-2-3-4-application` `v1.7.0` / `v1.7.1`), `JET3` has included a built-in verification suite (`JET3/verify.py` and `tests/test_verify.py`) since its initial commit (`ed6a1ef0`, `v3.0.0`).
 
-- **Core Physics & Tabular Ensemble (`JET3.verify()`):** Running `verify()` executes `process_JET_table(..., offline_mode=True)` on the ECOSTRESS Collection 2 Cal-Val input table (`ECOv002-cal-val-JET-inputs.csv`) and checks 22 output variables (`LE_*_Wm2`, `ET_daylight_*_kg`, `ET_daylight_kg`, `ET_uncertainty`, canopy/soil/interception fractions, `Ta_C`, `RH`, `Rn_Wm2`, `SM`, `ESI_PTJPLSM`, `PET_instantaneous_PTJPLSM_Wm2`, `WUE`, and `GPP_inst_g_m2_s`) against the frozen `ECOv002-cal-val-JET-outputs.csv` reference (`rtol=1e-4, atol=1e-7`). Passing `verify()` confirms that core radiative transfer (`FLiES-ANN`, `verma_net_radiation`, `SEBAL_soil_heat_flux`) and terrestrial ensemble calculations (`PT-JPL-SM`, `STIC-JPL`, `PM-JPL`, `BESS-JPL`) have not drifted from the initial Collection 3 deployment baseline when given pre-supplied forcing (`use_calibration=False`).
-- **Gridded & Online Regression Coverage (`v3.2.0`):** Because `verify()` runs `process_JET_table(..., offline_mode=True)` on point geometries (`include_water_surface=False`), `tests/test_regressions.py` provides explicit regression coverage for spatial downscaling (`sharpen_meteorology_data`), dynamic `GEOS-5 FP` / DEM retrieval (`wind_speed_mps`, `elevation_m`), and `AquaSEBS` `water_mask` gating.
+- **Core Physics & Tabular Ensemble (`JET3.verify()`):** Running `verify()` executes `process_JET_table(..., offline_mode=True)` on the ECOSTRESS Collection 2 Cal-Val input table (`ECOv002-cal-val-JET-inputs.csv`) and checks 22 output variables (`LE_*_Wm2`, `ET_daylight_*_kg`, `ET_daylight_kg`, `ET_uncertainty`, canopy/soil/interception fractions, `Ta_C`, `RH`, `Rn_Wm2`, `SM`, `ESI_PTJPLSM`, `PET_instantaneous_PTJPLSM_Wm2`, `WUE`, and `GPP_inst_g_m2_s`) against the frozen `ECOv002-cal-val-JET-outputs.csv` reference (`rtol=1e-4, atol=1e-7`). Passing `verify()` confirms that core radiative transfer (`FLiES-ANN`, `verma_net_radiation`, `SEBAL_soil_heat_flux`) and terrestrial ensemble calculations (`PT-JPL-SM`, `STIC-JPL`, `PM-JPL`, `BESS-JPL`) have not drifted from the initial Collection 3 deployment baseline when given pre-supplied forcing (`use_calibration=False`, `bias_correct_FLiES_ANN=False`).
+- **Gridded & Online Regression Coverage (`v3.2.0`+):** Because `verify()` runs `process_JET_table(..., offline_mode=True)` on point geometries (`include_water_surface=False`), `tests/test_regressions.py` provides explicit regression coverage for spatial downscaling (`sharpen_meteorology_data`), dynamic `GEOS-5 FP` / DEM retrieval (`wind_speed_mps`, `elevation_m`), `AquaSEBS` `water_mask` gating, optional `FLiES-ANN` solar radiation bias correction (`#23`), and physical unit-range warnings (`vapor_gccm`, `ozone_cm`).
 
-## Resolved Issues (`v3.2.0`)
+## Resolved Issues
 
-All eight issues tracked in [`notes/2026-11-20 JET3 Known Issues.md`](notes/2026-11-20%20JET3%20Known%20Issues.md) and on the [GitHub Issue Tracker](https://github.com/JPL-Evapotranspiration-Algorithms/JET3/issues) (`#14`–`#21`) are resolved in `JET3 v3.2.0`:
+### `v3.3.0`
+
+| Issue | Severity | Component | Resolution |
+| :--- | :--- | :--- | :--- |
+| **[#23](https://github.com/JPL-Evapotranspiration-Algorithms/JET3/issues/23)** | High | `JET3/constants.py`, `JET3/JET.py`, `pyproject.toml` | Kept `BIAS_CORRECT_FLIES_ANN = False` as the standalone and Collection 3 operational default, added opt-in `bias_correct_FLiES_ANN` residual bias correction against `GEOS5FP_connection.SWin()` (with border `NaN` gap-filling), pinned `GEOS5FP>=2.27.0` (`vapor_gccm` `/ 10.0` and `ozone_cm` `/ 1000.0` raster unit fix), and added physical unit-range warnings in `JET()` |
+
+### `v3.2.0`
+
+All eight issues tracked on the [GitHub Issue Tracker](https://github.com/JPL-Evapotranspiration-Algorithms/JET3/issues) (`#14`–`#21`) were resolved in `JET3 v3.2.0`:
 
 | Issue | Severity | Component | Resolution |
 | :--- | :--- | :--- | :--- |

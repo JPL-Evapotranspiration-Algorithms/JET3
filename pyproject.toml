@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "JET3"
-version = "3.2.0"
+version = "3.3.0"
 description = "Jet Propulsion Laboratory Evapotranspiration Ensemble ECOSTRESS Collection 3"
 readme = "README.md"
 authors = [
@@ -21,7 +21,7 @@ dependencies = [
     "ECOv002-calval-tables>=1.13.0",
     "FLiESANN",
     "gedi-canopy-height",
-    "GEOS5FP>=2.24.0",
+    "GEOS5FP>=2.27.0",
     "MODISCI",
     "NASADEM>=2.2.1",
     "numpy",

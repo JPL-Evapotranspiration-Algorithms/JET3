@@ -211,3 +211,4 @@ repomix-output.xml
 repomix-notebooks.xml
 **/.DS_Store
 .DS_Store
+*repomix*
