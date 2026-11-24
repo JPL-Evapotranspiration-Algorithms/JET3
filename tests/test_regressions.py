@@ -388,3 +388,94 @@ def test_issue_23_bias_correct_flies_ann(
     res_corr = JET3.JET(**common_kwargs, bias_correct_FLiES_ANN=True)
     mock_geos.SWin.assert_called_once()
     assert np.allclose(res_corr["SWin_Wm2"], 725.0)
+
+
+@patch("JET3.JET.PMJPL")
+@patch("JET3.JET.PTJPLSM")
+@patch("JET3.JET.STIC_JPL")
+@patch("JET3.JET.verma_net_radiation")
+@patch("JET3.JET.BESS_JPL")
+@patch("JET3.JET.FLiESANN")
+def test_unscaled_vapor_and_ozone_unit_warnings(
+    mock_flies,
+    mock_bess,
+    mock_verma,
+    mock_stic,
+    mock_ptjplsm,
+    mock_pmjpl,
+    caplog,
+):
+    """Verify JET() logs warnings when unscaled vapor_gccm (>15) or ozone_cm (>5) is passed."""
+    ones = np.ones((2,))
+    zeros = np.zeros((2,))
+    mock_flies.return_value = {
+        "SWin_TOA_Wm2": ones * 1000.0,
+        "SWin_Wm2": ones * 750.0,
+        "UV_Wm2": ones * 30.0,
+        "PAR_Wm2": ones * 320.0,
+        "NIR_Wm2": ones * 400.0,
+        "PAR_diffuse_Wm2": ones * 100.0,
+        "NIR_diffuse_Wm2": ones * 120.0,
+        "PAR_direct_Wm2": ones * 220.0,
+        "NIR_direct_Wm2": ones * 280.0,
+    }
+    mock_bess.return_value = {
+        "Rn_Wm2": ones * 450.0,
+        "G_Wm2": ones * 40.0,
+        "LE_Wm2": ones * 200.0,
+        "ET_daylight_kg": ones * 3.0,
+        "GPP": ones * 10.0,
+    }
+    mock_verma.return_value = {"Rn_Wm2": ones * 460.0}
+    mock_stic.return_value = {
+        "LE_Wm2": ones * 210.0,
+        "ET_daylight_kg": ones * 3.2,
+        "LE_canopy_Wm2": ones * 150.0,
+        "G_Wm2": ones * 45.0,
+    }
+    mock_ptjplsm.return_value = {
+        "LE_Wm2": ones * 220.0,
+        "ET_daylight_kg": ones * 3.4,
+        "G_Wm2": ones * 42.0,
+        "LE_canopy_Wm2": ones * 140.0,
+        "LE_soil_Wm2": ones * 60.0,
+        "LE_interception_Wm2": ones * 20.0,
+        "PET_Wm2": ones * 300.0,
+    }
+    mock_pmjpl.return_value = {
+        "LE_Wm2": ones * 205.0,
+        "ET_daylight_kg": ones * 3.1,
+        "G_Wm2": ones * 41.0,
+    }
+    mock_geos = MagicMock()
+    mock_geos.filenames = []
+
+    with caplog.at_level("WARNING"):
+        JET3.JET(
+            ST_C=ones * 30.0,
+            emissivity=ones * 0.98,
+            NDVI=ones * 0.6,
+            albedo=ones * 0.18,
+            geometry=Point(-118.0, 34.0),
+            time_UTC=datetime(2026, 6, 2, 18, 0),
+            COT=zeros,
+            AOT=ones * 0.1,
+            vapor_gccm=ones * 20.0,
+            ozone_cm=ones * 330.0,
+            elevation_m=ones * 100.0,
+            SZA_deg=ones * 25.0,
+            KG_climate=np.array(["Csa", "Csa"]),
+            Ta_C=ones * 26.0,
+            Tmin_C=ones * 15.0,
+            RH=ones * 0.45,
+            soil_moisture=ones * 0.22,
+            PAR_albedo=ones * 0.08,
+            NIR_albedo=ones * 0.28,
+            wind_speed_mps=ones * 3.0,
+            GEOS5FP_connection=mock_geos,
+            Rn_model_name="verma",
+            include_water_surface=False,
+        )
+
+    assert "vapor_gccm mean" in caplog.text
+    assert "ozone_cm mean" in caplog.text

@@ -21,7 +21,7 @@ dependencies = [
     "ECOv002-calval-tables>=1.13.0",
     "FLiESANN",
     "gedi-canopy-height",
-    "GEOS5FP>=2.24.0",
+    "GEOS5FP>=2.27.0",
     "MODISCI",
     "NASADEM>=2.2.1",
     "numpy",

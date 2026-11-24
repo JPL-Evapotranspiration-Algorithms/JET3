@@ -425,6 +425,18 @@ def JET(
     if albedo_UQ is not None:
         results['albedo_UQ'] = albedo_UQ
 
+    if vapor_gccm is not None and np.nanmean(vapor_gccm) > 15.0:
+        logger.warning(
+            f"vapor_gccm mean ({np.nanmean(vapor_gccm):.2f}) exceeds 15 g/cm^2; "
+            "verify GEOS5FP >=2.27.0 is installed so TQV (kg/m^2) is converted to g/cm^2."
+        )
+
+    if ozone_cm is not None and np.nanmean(ozone_cm) > 5.0:
+        logger.warning(
+            f"ozone_cm mean ({np.nanmean(ozone_cm):.2f}) exceeds 5 cm; "
+            "verify GEOS5FP >=2.27.0 is installed so TO3 (DU) is converted to cm."
+        )
+
     # Run FLiES-ANN
     logger.info(f"running Forest Light Environmental Simulator")
 
