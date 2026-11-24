@@ -108,7 +108,8 @@ def JET(
         generate_UQ: bool = False,
         use_calibration: bool = False,
         sharpen_soil_moisture: bool = SHARPEN_SOIL_MOISTURE,
-        sharpen_meteorology: bool = SHARPEN_METEOROLOGY) -> Dict[str, Union[Raster, np.ndarray]]:
+        sharpen_meteorology: bool = SHARPEN_METEOROLOGY,
+        bias_correct_FLiES_ANN: bool = BIAS_CORRECT_FLIES_ANN) -> Dict[str, Union[Raster, np.ndarray]]:
     """
     Main science function for JET (JPL Evapotranspiration Ensemble).
 
@@ -493,9 +494,34 @@ def JET(
 
     check_distribution(PAR_direct_Wm2, "PAR_direct_Wm2")
 
-    # Use raw FLiES-ANN output directly without bias correction
-    SWin_Wm2 = SWin_FLiES_ANN_raw
-    check_distribution(SWin_Wm2, "SWin_FLiES_ANN")
+    if bias_correct_FLiES_ANN and processing_as_raster and not offline_mode:
+        logger.info("bias-correcting FLiES-ANN solar radiation to GEOS-5 FP")
+        if coarse_geometry is None:
+            coarse_geometry = geometry.rescale(GEOS_IN_SENTINEL_COARSE_CELL_SIZE)
+
+        SWin_coarse_GEOS5FP = GEOS5FP_connection.SWin(
+            time_UTC=time_UTC,
+            geometry=coarse_geometry,
+            resampling=downsampling,
+        )
+        check_distribution(SWin_coarse_GEOS5FP, "SWin_coarse_GEOS5FP")
+
+        SWin_coarse_FLiES = SWin_FLiES_ANN_raw.to_geometry(coarse_geometry, resampling=upsampling)
+        check_distribution(SWin_coarse_FLiES, "SWin_coarse_FLiES")
+
+        SWin_bias_coarse = SWin_coarse_FLiES - SWin_coarse_GEOS5FP
+        check_distribution(SWin_bias_coarse, "SWin_bias_coarse")
+
+        SWin_bias_smooth = SWin_bias_coarse.to_geometry(geometry, resampling=downsampling)
+        SWin_bias_smooth = rt.where(np.isnan(SWin_bias_smooth), float(np.nanmean(SWin_bias_coarse)), SWin_bias_smooth)
+        check_distribution(SWin_bias_smooth, "SWin_bias_smooth")
+
+        SWin_Wm2 = rt.clip(SWin_FLiES_ANN_raw - SWin_bias_smooth, 0, None)
+        check_distribution(SWin_Wm2, "SWin_FLiES_ANN_bias_corrected")
+    else:
+        # Use raw FLiES-ANN output directly without bias correction
+        SWin_Wm2 = SWin_FLiES_ANN_raw
+        check_distribution(SWin_Wm2, "SWin_FLiES_ANN")
 
     # Use FLiES-ANN solar radiation exclusively
     SWin = SWin_Wm2

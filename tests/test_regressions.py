@@ -15,7 +15,7 @@ from JET3.sharpen_meteorology_data import sharpen_meteorology_data
 from JET3.Ta_C_error_OLS import get_ta_c_error_onnx_model_path
 
 
-def _make_grid_geometry(shape=(4, 4)):
+def _make_grid_geometry(shape=(2, 2)):
     geom = MagicMock(spec=RasterGeometry)
     geom.shape = shape
     geom.cell_size = 70.0
@@ -101,12 +101,12 @@ def test_issue_20_sharpen_meteorology_uses_td_k():
 
     with patch("JET3.sharpen_meteorology_data.rt.where", side_effect=lambda cond, a, b: b if np.all(cond) else a):
         Ta_C, RH, Ta_C_smooth = sharpen_meteorology_data(
-        ST_C=st_c,
-        NDVI=ndvi,
-        albedo=albedo,
-        geometry=geom,
-        coarse_geometry=coarse,
-        time_UTC=datetime(2026, 7, 1, 18, 0),
+            ST_C=st_c,
+            NDVI=ndvi,
+            albedo=albedo,
+            geometry=geom,
+            coarse_geometry=coarse,
+            time_UTC=datetime(2026, 7, 1, 18, 0),
             GEOS5FP_connection=mock_geos,
         )
 
@@ -280,3 +280,111 @@ def test_issue_15_process_jet_table_aliases_and_missing_optional_cols():
     assert kwargs["RH"] is None
     assert kwargs["soil_moisture"] is None
     assert np.isclose(out["ET_daylight_kg"].iloc[0], 3.5)
+
+
+@patch("JET3.JET.PMJPL")
+@patch("JET3.JET.PTJPLSM")
+@patch("JET3.JET.STIC_JPL")
+@patch("JET3.JET.verma_net_radiation")
+@patch("JET3.JET.BESS_JPL")
+@patch("JET3.JET.FLiESANN")
+def test_issue_23_bias_correct_flies_ann(
+    mock_flies,
+    mock_bess,
+    mock_verma,
+    mock_stic,
+    mock_ptjplsm,
+    mock_pmjpl,
+):
+    """Issue #23: Verify optional GEOS-5 FP residual bias correction for FLiES-ANN SWin_Wm2."""
+    from rasters import RasterGrid
+
+    assert constants.BIAS_CORRECT_FLIES_ANN is False
+
+    fine_geom = RasterGrid.from_bbox(xmin=400000.0, ymin=3760000.0, xmax=428000.0, ymax=3788000.0, cell_size=70.0, crs="EPSG:32611")
+    ones = Raster(np.ones(fine_geom.shape, dtype=float), geometry=fine_geom)
+    zeros = Raster(np.zeros(fine_geom.shape, dtype=float), geometry=fine_geom)
+
+    # Raw FLiES-ANN predicts 800 W/m2 everywhere
+    mock_flies.return_value = {
+        "SWin_TOA_Wm2": ones * 1000.0,
+        "SWin_Wm2": ones * 800.0,
+        "UV_Wm2": ones * 30.0,
+        "PAR_Wm2": ones * 350.0,
+        "NIR_Wm2": ones * 420.0,
+        "PAR_diffuse_Wm2": ones * 100.0,
+        "NIR_diffuse_Wm2": ones * 120.0,
+        "PAR_direct_Wm2": ones * 250.0,
+        "NIR_direct_Wm2": ones * 300.0,
+    }
+    mock_bess.return_value = {
+        "Rn_Wm2": ones * 450.0,
+        "G_Wm2": ones * 40.0,
+        "LE_Wm2": ones * 200.0,
+        "ET_daylight_kg": ones * 3.0,
+        "GPP": ones * 10.0,
+    }
+    mock_verma.return_value = {"Rn_Wm2": ones * 460.0}
+    mock_stic.return_value = {
+        "LE_Wm2": ones * 210.0,
+        "ET_daylight_kg": ones * 3.2,
+        "LE_canopy_Wm2": ones * 150.0,
+        "G_Wm2": ones * 45.0,
+    }
+    mock_ptjplsm.return_value = {
+        "LE_Wm2": ones * 220.0,
+        "ET_daylight_kg": ones * 3.4,
+        "G_Wm2": ones * 42.0,
+        "LE_canopy_Wm2": ones * 140.0,
+        "LE_soil_Wm2": ones * 60.0,
+        "LE_interception_Wm2": ones * 20.0,
+        "PET_Wm2": ones * 300.0,
+    }
+    mock_pmjpl.return_value = {
+        "LE_Wm2": ones * 205.0,
+        "ET_daylight_kg": ones * 3.1,
+        "G_Wm2": ones * 41.0,
+    }
+
+    mock_geos = MagicMock()
+    mock_geos.filenames = []
+    # GEOS-5 FP coarse SWin is 725 W/m2 (+75 W/m2 FLiES-ANN bias)
+    mock_geos.SWin.side_effect = lambda time_UTC, geometry, resampling=None: Raster(
+        np.full(geometry.shape, 725.0, dtype=float), geometry=geometry
+    )
+
+    common_kwargs = dict(
+        ST_C=ones * 30.0,
+        emissivity=ones * 0.98,
+        NDVI=ones * 0.6,
+        albedo=ones * 0.18,
+        geometry=fine_geom,
+        time_UTC=datetime(2026, 6, 2, 18, 0),
+        COT=zeros,
+        AOT=ones * 0.1,
+        vapor_gccm=ones * 1.5,
+        ozone_cm=ones * 0.3,
+        elevation_m=ones * 100.0,
+        SZA_deg=ones * 25.0,
+        KG_climate=Raster(np.full(fine_geom.shape, 4), geometry=fine_geom),
+        Ta_C=ones * 26.0,
+        Tmin_C=ones * 15.0,
+        RH=ones * 0.45,
+        soil_moisture=ones * 0.22,
+        PAR_albedo=ones * 0.08,
+        NIR_albedo=ones * 0.28,
+        wind_speed_mps=ones * 3.0,
+        GEOS5FP_connection=mock_geos,
+        Rn_model_name="verma",
+        include_water_surface=False,
+    )
+
+    # 1. Default (bias_correct_FLiES_ANN=False): raw FLiES-ANN output preserved, SWin not queried
+    res_raw = JET3.JET(**common_kwargs)
+    mock_geos.SWin.assert_not_called()
+    assert np.allclose(res_raw["SWin_Wm2"], 800.0)
+
+    # 2. Enabled (bias_correct_FLiES_ANN=True): +75 W/m2 bias removed -> 725 W/m2
+    res_corr = JET3.JET(**common_kwargs, bias_correct_FLiES_ANN=True)
+    mock_geos.SWin.assert_called_once()
+    assert np.allclose(res_corr["SWin_Wm2"], 725.0)
